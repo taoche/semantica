@@ -1821,6 +1821,14 @@ async def search_entities(
     return results
 
 
+def _graph_entity_type(node: Dict[str, Any]) -> str:
+    """Editor-graph classification: the classifier's "unknown" fallback maps to
+    "external", because a node the vocabulary cannot name is, from the
+    requested ontology's perspective, external reference material."""
+    entity_type = _classify_node_type(node.get("type", ""))
+    return "external" if entity_type == "unknown" else entity_type
+
+
 @router.get("/graph", response_model=OntologyGraphResponse)
 async def get_ontology_graph(
     request: Request,
@@ -1923,7 +1931,7 @@ async def get_ontology_graph(
     return OntologyGraphResponse(
         uri=uri,
         nodes=[
-            {**node, "entity_type": _classify_node_type(node.get("type", ""))}
+            {**node, "entity_type": _graph_entity_type(node)}
             for node in selected_nodes
         ],
         edges=selected_edges,
